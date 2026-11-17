@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Тривога UA</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+body{margin:0;background:#111827;color:white;font-family:Arial}
+header{padding:18px;background:#1e293b;font-size:22px;font-weight:bold}
+#map{height:75vh;background:white}
+.panel{padding:12px;background:#1e293b}
+button{padding:12px;border:0;border-radius:8px;font-weight:bold;margin:4px}
+.yellow{background:#f4c542}
+.red{background:#ef5350}
+.white{background:white}
+</style>
+</head>
+<body>
+<header>🇺🇦 ТРИВОГА UA</header>
+<div class="panel">
+<div id="selected">Оберіть район на карті</div>
+<button class="yellow" onclick="setColor('#f4c542')">🟡 Жовтий</button>
+<button class="red" onclick="setColor('#ef5350')">🔴 Червоний</button>
+<button class="white" onclick="setColor('white')">⚪ Скинути</button>
+</div>
+<div id="map"></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const map=L.map('map').setView([48.7,31.2],6);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+maxZoom:18
+}).addTo(map);
+
+let selected=null;
+const colors={};
+function setColor(color){
+if(!selected)return;
+colors[selected.name]=color;
+selected.setStyle({fillColor:color,fillOpacity:color==='white'?1:.85});
+}
+fetch('https://raw.githubusercontent.com/Astaryon/UA_geojson/main/rayony.geojson')
+.then(r=>r.json())
+.then(data=>{
+const layer=L.geoJSON(data,{
+style:f=>({color:'#64748b',weight:1,fillColor:'white',fillOpacity:1}),
+onEachFeature:(f,l)=>{
+const name=f.properties.name||f.properties.NAME_2||f.properties.shapeName||'Район';
+l.on('click',()=>{
+selected=l;
+selected.name=name;
+document.getElementById('selected').textContent=name;
+});
+}
+}).addTo(map);
+map.fitBounds(layer.getBounds());
+});
+</script>
+</body>
+</html>
